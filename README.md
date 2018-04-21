@@ -7,11 +7,7 @@ This package parses CV via daxtra then gives you a structured data.
 
 Install using composer:
     
-    
-    
-      composer require thegeekym/cvparser
-    
-    
+     composer require geeky/cvparser
 
 Then, in `config/app.php`, add the following to the service providers array.
 
