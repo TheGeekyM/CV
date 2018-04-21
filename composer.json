@@ -1,0 +1,20 @@
+{
+    "name": "geeky/cvparser",
+    "description": "This package parses CV via daxtra then gives you a structured data.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["cv","parser"],
+    "authors": [
+        {
+            "name": "Mohamed Emad",
+            "email": "thegeekym@gmail.com",
+            "role": "Back-End Developer"
+        }
+    ],
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "Geeky\\CVParser\\": "src/"
+        }
+    }
+}
