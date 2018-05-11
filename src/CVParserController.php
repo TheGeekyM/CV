@@ -39,7 +39,7 @@ class CVParserController extends Controller
 		$data['education']        		 = $this->extractEducationInfo();
 		$data['languages']  			 = $this->extractLanguagesInfo();
 		$data['additional_information']  = $this->extractAdittionalInfo();
-		$data['summury']      			 = (string)$this->xml->StructuredXMLResume->ExecutiveSummary;
+		$data['summary']      			 = (string)$this->xml->StructuredXMLResume->ExecutiveSummary;
 		$data['objective']    			 = (string)$this->xml->StructuredXMLResume->Objective;
 		$data['revision_date'] 			 = (string)$this->xml->StructuredXMLResume->RevisionDate;
 		$data['text_resume']  			 = (string)$this->xml->NonXMLResume->TextResume;
