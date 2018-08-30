@@ -4,248 +4,246 @@ namespace Geeky\CVParser;
 
 use App\Http\Controllers\Controller;
 
-
+/**
+ * Class CVParserController
+ *
+ * @package Geeky\CVParser
+ */
 class CVParserController extends Controller
 {
-	public $xml = [];
+    
+    public $xml = [];
 
-	public function parse($resume_url)
-	{
-		$this->xml    = new \SimpleXMLElement($this->parseCvToXml($resume_url));
-		return $this->extractCVData();
-	}
+    public function parse($resume_url)
+    {
+        if ($resume_url) {
+            $this->xml = new \SimpleXMLElement($this->parseCvToXml($resume_url));
+            return $this->extractCVData();
+        }
+        
+        return FALSE;
+    }
 
-	public function parseCvToXml($resume_url)
-	{
-		$encoded_resume_file  = base64_encode(file_get_contents($resume_url));
-		$client = new \SoapClient('http://88.198.90.116/cvvalid/CVXtractorService.wsdl');
-		$result = $client->ProcessCV(
-			[
-				'document_url' => $encoded_resume_file,
-				'account'      => 'theGeeky'
-			]
-		);
-		return $result->hrxml;
-	}
+    public function parseCvToXml($resume_url)
+    {
+        if (is_file($resume_url)) {
+            $resume_url = base64_encode(file_get_contents($resume_url));
+        }
 
-	public function extractCVData()
-	{
-		if((string)$this->xml == 'document need to be specified!')
-			return 'false';
+        $client = new \SoapClient('http://88.198.90.116/cvvalid/CVXtractorService.wsdl');
+        $result = $client->ProcessCV(
+            [
+                'document_url' => $resume_url,
+                'account'      => 'theGeeky'
+            ]
+        );
+        return $result->hrxml;
+    }
 
-		$data['contact_info']     		 = $this->extractContactInfo();
-		$data['experiences']      		 = $this->extractExperienceInfo();
-		$data['skills']           		 = $this->extractSkillsInfo();
-		$data['education']        		 = $this->extractEducationInfo();
-		$data['languages']  			 = $this->extractLanguagesInfo();
-		$data['additional_information']  = $this->extractAdittionalInfo();
-		$data['summary']      			 = (string)$this->xml->StructuredXMLResume->ExecutiveSummary;
-		$data['objective']    			 = (string)$this->xml->StructuredXMLResume->Objective;
-		$data['revision_date'] 			 = (string)$this->xml->StructuredXMLResume->RevisionDate;
-		$data['text_resume']  			 = (string)$this->xml->NonXMLResume->TextResume;
+    public function extractCVData()
+    {
+        if ((string)$this->xml == 'document need to be specified!')
+            return 'false';
 
-		return $data;
-	}
+        $data['contact_info']           = $this->extractContactInfo();
+        $data['experiences']            = $this->extractExperienceInfo();
+        $data['skills']                 = $this->extractSkillsInfo();
+        $data['education']              = $this->extractEducationInfo();
+        $data['languages']              = $this->extractLanguagesInfo();
+        $data['additional_information'] = $this->extractAdittionalInfo();
+        $data['summury']                = (string)$this->xml->StructuredXMLResume->ExecutiveSummary;
+        $data['objective']              = (string)$this->xml->StructuredXMLResume->Objective;
+        $data['revision_date']          = (string)$this->xml->StructuredXMLResume->RevisionDate;
+        $data['text_resume']            = (string)$this->xml->NonXMLResume->TextResume;
 
-	private function extractContactInfo()
-	{
-		$contact_info   = $this->xml->StructuredXMLResume->ContactInfo;
-		$data           = [];
+        return $data;
+    }
 
-		if($contact_info)
-		{
-			$contact_method = $contact_info->ContactMethod;
+    private function extractContactInfo()
+    {
+        $contact_info = $this->xml->StructuredXMLResume->ContactInfo;
+        $data         = [];
 
-			$data['full_name']      = $this->getValue($contact_info , 'PersonName' , 'FormattedName');
-			$data['first_name']     = $this->getValue($contact_info , 'PersonName' , 'GivenName');
-			$data['last_name']      = $this->getValue($contact_info , 'PersonName' , 'FamilyName');
-			$data['sex']            = $this->getValue($contact_info , 'PersonName' , 'sex');
-			$data['email']          = $this->getValue($contact_method , 'InternetEmailAddress');
-			$data['mobile']         = $this->ExtractMobileNumber();
-			$data['telephone']      = $this->ExtractTelephoneNumber();
-			$data['postal_code']    = $this->getValue($contact_method->PostalAddress , 'CountryCode');
-			$data['city']           = $this->getValue($contact_method->PostalAddress , 'Municipality');
-			$data['nationality']    = $this->getValue($this->xml->StructuredXMLResume , 'Nationality');
-			$data['birth_date']     = $this->getValue($this->xml->StructuredXMLResume , 'Date' , 'AnyDate');
-			$data['marital_status'] = $this->getValue($this->xml->StructuredXMLResume , 'MaritalStatus');
-		}
+        if ($contact_info) {
+            $contact_method = $contact_info->ContactMethod;
 
-		return $data;
-	}
+            $data['full_name']      = $this->getValue($contact_info, 'PersonName', 'FormattedName');
+            $data['first_name']     = $this->getValue($contact_info, 'PersonName', 'GivenName');
+            $data['last_name']      = $this->getValue($contact_info, 'PersonName', 'FamilyName');
+            $data['sex']            = $this->getValue($contact_info, 'PersonName', 'sex');
+            $data['email']          = $this->getValue($contact_method, 'InternetEmailAddress');
+            $data['mobile']         = $this->ExtractMobileNumber();
+            $data['telephone']      = $this->ExtractTelephoneNumber();
+            $data['postal_code']    = $this->getValue($contact_method->PostalAddress, 'CountryCode');
+            $data['city']           = $this->getValue($contact_method->PostalAddress, 'Municipality');
+            $data['nationality']    = $this->getValue($this->xml->StructuredXMLResume, 'Nationality');
+            $data['birth_date']     = $this->getValue($this->xml->StructuredXMLResume, 'Date', 'AnyDate');
+            $data['marital_status'] = $this->getValue($this->xml->StructuredXMLResume, 'MaritalStatus');
+        }
 
-	private function extractExperienceInfo()
-	{
-		$experiences      = $this->xml->StructuredXMLResume->EmploymentHistory;
-		$data 	          = [];
-		
-		if($experiences)
-		{
-			$experiences = $experiences->EmployerOrg;
+        return $data;
+    }
 
-			foreach($experiences as $experience)
-			{
-				array_push($data , [
-					'company_name'   => (string)$experience->EmployerOrgName,
-					'job_title'      => $this->getValue($experience->PositionHistory ,'Title'),
-					'city'           => $this->getValue($experience->EmployerContactInfo, 'LocationSummary' , 'Municipality'),
-					'country_code'   => $this->getValue($experience->EmployerContactInfo, 'LocationSummary' ,  'CountryCode'),
-					'start_date'     => $this->getValue($experience->PositionHistory , 'StartDate' , 'YearMonth'),
-					'end_date'       => $this->getValue($experience->PositionHistory , 'EndDate' , 'YearMonth'),
-					'months_Of_work' => $this->getValue($experience->PositionHistory , 'UserArea' , 'DaxPositionHistoryUserArea' , 'MonthsOfWork'),
-					'job_category' => $this->getValue($experience , 'JobCategory' , 'CategoryCode'),
-					'domain_name'  => $this->getValue($experience->EmployerContactInfo, 'InternetDomainName'),
-					'Description'  => str_replace("\n", "", $this->getValue($experience->PositionHistory , 'Description'))
-				]);
-			}
-		}
+    private function extractExperienceInfo()
+    {
+        $experiences = $this->xml->StructuredXMLResume->EmploymentHistory;
+        $data        = [];
 
-		return $data;
-	}
+        if ($experiences) {
+            $experiences = $experiences->EmployerOrg;
 
-	private function extractSkillsInfo()
-	{
-		$skills = $this->xml->StructuredXMLResume->Competency;
-		$data   = [];
-		
-		if($skills)
-		{
-			foreach($skills as $skill)
-			{
-				array_push($data , [
-					'name' 			    => $this->getValue($skill->attributes()->name),
-					'description' 	    => $this->getValue($skill->attributes()->description),
-					'skill_proficiency' => $this->getValue($skill->CompetencyWeight[1] , 'StringValue')
-				]);
-			}
-		}
+            foreach ($experiences as $experience) {
+                array_push($data, [
+                    'company_name'   => (string)$experience->EmployerOrgName,
+                    'job_title'      => $this->getValue($experience->PositionHistory, 'Title'),
+                    'city'           => $this->getValue($experience->EmployerContactInfo, 'LocationSummary', 'Municipality'),
+                    'country_code'   => $this->getValue($experience->EmployerContactInfo, 'LocationSummary', 'CountryCode'),
+                    'start_date'     => $this->getValue($experience->PositionHistory, 'StartDate', 'YearMonth'),
+                    'end_date'       => $this->getValue($experience->PositionHistory, 'EndDate', 'YearMonth'),
+                    'months_Of_work' => $this->getValue($experience->PositionHistory, 'UserArea', 'DaxPositionHistoryUserArea', 'MonthsOfWork'),
+                    'job_category'   => $this->getValue($experience, 'JobCategory', 'CategoryCode'),
+                    'domain_name'    => $this->getValue($experience->EmployerContactInfo, 'InternetDomainName'),
+                    'Description'    => str_replace("\n", "", $this->getValue($experience->PositionHistory, 'Description'))
+                ]);
+            }
+        }
 
-		return $data;
-	}
+        return $data;
+    }
 
-	function extractAdittionalInfo()
-	{
+    private function extractSkillsInfo()
+    {
+        $skills = $this->xml->StructuredXMLResume->Competency;
+        $data   = [];
 
-		$info 	    = $this->xml->UserArea->DaxResumeUserArea;
-		$data       = [];
+        if ($skills) {
+            foreach ($skills as $skill) {
+                array_push($data, [
+                    'name'              => $this->getValue($skill->attributes()->name),
+                    'description'       => $this->getValue($skill->attributes()->description),
+                    'skill_proficiency' => $this->getValue($skill->CompetencyWeight[1], 'StringValue')
+                ]);
+            }
+        }
 
-		if($info)
-		{
-			$info 	    = $info->AdditionalPersonalData;
-			$experience = $info->ExperienceSummary;
-			$data['total_months_of_work_experience'] 					 = $this->getValue($experience , 'TotalMonthsOfWorkExperience');
-			$data['total_years_of_work_experience']  					 = $this->getValue($experience , 'TotalYearsOfWorkExperience');
-			$data['highest_educational_level']       					 = $this->getValue($experience , 'HighestEducationalLevel');
-			$data['total_months_of_management_work_experience']   	     = $this->getValue($experience , 'TotalMonthsOfManagementWorkExperience');
-			$data['total_years_of_management_work_experience']           = $this->getValue($experience , 'TotalYearsOfManagementWorkExperience');
-			$data['total_monthsOf_low_level_management_work_experience'] = $this->getValue($experience , 'TotalMonthsOfLowLevelManagementWorkExperience');
-			$data['total_years_ofLow_level_management_work_experience']  = $this->getValue($experience , 'TotalYearsOfLowLevelManagementWorkExperience');
-			$data['executive_brief']                  					 = $this->getValue($experience , 'ExecutiveBrief');
-			$data['ManagementRecord']                 					 = $this->getValue($experience , 'ManagementRecord');
-			$data['Hobbies']                          					 = $this->getValue($info , 'Hobbies');
-		}
+        return $data;
+    }
 
-		return $data;
-	}
+    function extractAdittionalInfo()
+    {
 
-	private function extractLanguagesInfo()
-	{
-		$languages = $this->xml->StructuredXMLResume->Languages;
-		$data 	   = [];
-		
-		if($languages)
-		{
-			foreach($languages->Language as $language)
-			{
-				array_push($data , [
-					'LanguageCode' => $this->getValue($language , 'LanguageCode'),
-					'read' 		   => $this->getValue($language , 'Read'),
-					'write'        => $this->getValue($language , 'Write'),
-					'speak'        => $this->getValue($language , 'Speak'),
-					'comments'     => $this->getValue($language , 'Comments')
-				]);
-			}
-		}
+        $info = $this->xml->UserArea->DaxResumeUserArea;
+        $data = [];
 
-		return $data;
+        if ($info) {
+            $info                                                        = $info->AdditionalPersonalData;
+            $experience                                                  = $info->ExperienceSummary;
+            $data['total_months_of_work_experience']                     = $this->getValue($experience, 'TotalMonthsOfWorkExperience');
+            $data['total_years_of_work_experience']                      = $this->getValue($experience, 'TotalYearsOfWorkExperience');
+            $data['highest_educational_level']                           = $this->getValue($experience, 'HighestEducationalLevel');
+            $data['total_months_of_management_work_experience']          = $this->getValue($experience, 'TotalMonthsOfManagementWorkExperience');
+            $data['total_years_of_management_work_experience']           = $this->getValue($experience, 'TotalYearsOfManagementWorkExperience');
+            $data['total_monthsOf_low_level_management_work_experience'] = $this->getValue($experience, 'TotalMonthsOfLowLevelManagementWorkExperience');
+            $data['total_years_ofLow_level_management_work_experience']  = $this->getValue($experience, 'TotalYearsOfLowLevelManagementWorkExperience');
+            $data['executive_brief']                                     = $this->getValue($experience, 'ExecutiveBrief');
+            $data['ManagementRecord']                                    = $this->getValue($experience, 'ManagementRecord');
+            $data['Hobbies']                                             = $this->getValue($info, 'Hobbies');
+        }
 
-	}
+        return $data;
+    }
 
-	private function extractEducationInfo()
-	{
-		$education = $this->xml->StructuredXMLResume->EducationHistory;
-		$data 	   = [];
-		
-		if($education)
-		{
-			foreach($education->SchoolOrInstitution as $education)
-			{
-				array_push($data , [
-					'SchoolName'        => $this->getValue($education , 'SchoolName'),
-					'Major'             => $this->getValue($education , 'Major'),
-					'organization_unit' => $this->getValue($education , 'OrganizationUnit'),
-					'city'              => $this->getValue($education , 'LocationSummary' , 'Municipality'),
-					'country_code'      => $this->getValue($education , 'LocationSummary' , 'CountryCode'),
-					'degree_name'       => $this->getValue($education , 'Degree' , 'DegreeName'),
-					'degree_date'       => $this->getValue($education , 'Degree' , 'DegreeDate' , 'Year'),
-					'start_date'        => $this->getValue($education , 'DatesOfAttendance' , 'StartDate' , 'Year'),
-					'end_date'          => $this->getValue($education , 'DatesOfAttendance' , 'EndDate' , 'Year'),
-					'comments'          => $this->getValue($education , 'Comments')
-				]);
-			}
-		}
+    private function extractLanguagesInfo()
+    {
+        $languages = $this->xml->StructuredXMLResume->Languages;
+        $data      = [];
 
-		return $data;
-	}
+        if ($languages) {
+            foreach ($languages->Language as $language) {
+                array_push($data, [
+                    'LanguageCode' => $this->getValue($language, 'LanguageCode'),
+                    'read'         => $this->getValue($language, 'Read'),
+                    'write'        => $this->getValue($language, 'Write'),
+                    'speak'        => $this->getValue($language, 'Speak'),
+                    'comments'     => $this->getValue($language, 'Comments')
+                ]);
+            }
+        }
 
-	private function ExtractMobileNumber()
-	{
-		$mobile = $this->xml->StructuredXMLResume->ContactInfo->ContactMethod->Mobile;
-		$data   = [];
+        return $data;
 
-		if($mobile)
-		{
-			$data['formatted_number']           = $this->getValue($mobile , 'FormattedNumber');
-			$data['international_country_code'] = $this->getValue($mobile , 'InternationalCountryCode');
-			$data['subscriber_number'] 	        = $this->getValue($mobile , 'SubscriberNumber');
-		}
+    }
 
-		return $data;
-	}
+    private function extractEducationInfo()
+    {
+        $education = $this->xml->StructuredXMLResume->EducationHistory;
+        $data      = [];
+
+        if ($education) {
+            foreach ($education->SchoolOrInstitution as $education) {
+                array_push($data, [
+                    'SchoolName'        => $this->getValue($education, 'SchoolName'),
+                    'Major'             => $this->getValue($education, 'Major'),
+                    'organization_unit' => $this->getValue($education, 'OrganizationUnit'),
+                    'city'              => $this->getValue($education, 'LocationSummary', 'Municipality'),
+                    'country_code'      => $this->getValue($education, 'LocationSummary', 'CountryCode'),
+                    'degree_name'       => $this->getValue($education, 'Degree', 'DegreeName'),
+                    'degree_date'       => $this->getValue($education, 'Degree', 'DegreeDate', 'Year'),
+                    'start_date'        => $this->getValue($education, 'DatesOfAttendance', 'StartDate', 'Year'),
+                    'end_date'          => $this->getValue($education, 'DatesOfAttendance', 'EndDate', 'Year'),
+                    'comments'          => $this->getValue($education, 'Comments')
+                ]);
+            }
+        }
+
+        return $data;
+    }
+
+    private function ExtractMobileNumber()
+    {
+        $mobile = $this->xml->StructuredXMLResume->ContactInfo->ContactMethod->Mobile;
+        $data   = [];
+
+        if ($mobile) {
+            $data['formatted_number']           = $this->getValue($mobile, 'FormattedNumber');
+            $data['international_country_code'] = $this->getValue($mobile, 'InternationalCountryCode');
+            $data['subscriber_number']          = $this->getValue($mobile, 'SubscriberNumber');
+        }
+
+        return $data;
+    }
 
 
-	private function ExtractTelephoneNumber()
-	{
-		$telephone = $this->xml->StructuredXMLResume->ContactInfo->ContactMethod->Telephone;
-		$data   = [];
+    private function ExtractTelephoneNumber()
+    {
+        $telephone = $this->xml->StructuredXMLResume->ContactInfo->ContactMethod->Telephone;
+        $data      = [];
 
-		if($telephone)
-		{
-			$data['formatted_number']           = $this->getValue($telephone , 'FormattedNumber');
-			$data['international_country_code'] = $this->getValue($telephone , 'InternationalCountryCode');
-			$data['subscriber_number'] 	        = $this->getValue($telephone , 'SubscriberNumber');
-		}
+        if ($telephone) {
+            $data['formatted_number']           = $this->getValue($telephone, 'FormattedNumber');
+            $data['international_country_code'] = $this->getValue($telephone, 'InternationalCountryCode');
+            $data['subscriber_number']          = $this->getValue($telephone, 'SubscriberNumber');
+        }
 
-		return $data;
-	}
+        return $data;
+    }
 
-	public function getValue()
-	{
-		$args_count = func_num_args();
-		$object     = func_get_arg(0);
+    public function getValue()
+    {
+        $args_count = func_num_args();
+        $object     = func_get_arg(0);
 
-		for($i = 1; $i < $args_count; $i++)
-		{
-			if(isset($object->{func_get_arg($i)}))
-			{
-				$object = $object->{func_get_arg($i)};	
-				continue;
-			}
+        for ($i = 1; $i < $args_count; $i++) {
+            if (isset($object->{func_get_arg($i)})) {
+                $object = $object->{func_get_arg($i)};
+                continue;
+            }
 
-			return '';
-		}
+            return '';
+        }
 
-		return (string)$object;
-	}
+        return (string)$object;
+    }
 
 
 }
