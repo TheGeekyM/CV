@@ -11,19 +11,32 @@ use App\Http\Controllers\Controller;
  */
 class CVParserController extends Controller
 {
-    
+
+    /**
+     * @var array
+     */
     public $xml = [];
 
+    /**
+     * @param $resume_url
+     *
+     * @return bool|string
+     */
     public function parse($resume_url)
     {
         if ($resume_url) {
             $this->xml = new \SimpleXMLElement($this->parseCvToXml($resume_url));
             return $this->extractCVData();
         }
-        
+
         return FALSE;
     }
 
+    /**
+     * @param $resume_url
+     *
+     * @return mixed
+     */
     public function parseCvToXml($resume_url)
     {
         if (is_file($resume_url)) {
@@ -40,10 +53,14 @@ class CVParserController extends Controller
         return $result->hrxml;
     }
 
+    /**
+     * @return string
+     */
     public function extractCVData()
     {
         if ((string)$this->xml == 'document need to be specified!')
             return 'false';
+
 
         $data['contact_info']           = $this->extractContactInfo();
         $data['experiences']            = $this->extractExperienceInfo();
@@ -51,7 +68,7 @@ class CVParserController extends Controller
         $data['education']              = $this->extractEducationInfo();
         $data['languages']              = $this->extractLanguagesInfo();
         $data['additional_information'] = $this->extractAdittionalInfo();
-        $data['summury']                = (string)$this->xml->StructuredXMLResume->ExecutiveSummary;
+        $data['summary']                = (string)$this->xml->StructuredXMLResume->ExecutiveSummary;
         $data['objective']              = (string)$this->xml->StructuredXMLResume->Objective;
         $data['revision_date']          = (string)$this->xml->StructuredXMLResume->RevisionDate;
         $data['text_resume']            = (string)$this->xml->NonXMLResume->TextResume;
@@ -59,6 +76,9 @@ class CVParserController extends Controller
         return $data;
     }
 
+    /**
+     * @return array
+     */
     private function extractContactInfo()
     {
         $contact_info = $this->xml->StructuredXMLResume->ContactInfo;
@@ -84,6 +104,9 @@ class CVParserController extends Controller
         return $data;
     }
 
+    /**
+     * @return array
+     */
     private function extractExperienceInfo()
     {
         $experiences = $this->xml->StructuredXMLResume->EmploymentHistory;
@@ -111,6 +134,9 @@ class CVParserController extends Controller
         return $data;
     }
 
+    /**
+     * @return array
+     */
     private function extractSkillsInfo()
     {
         $skills = $this->xml->StructuredXMLResume->Competency;
@@ -129,6 +155,9 @@ class CVParserController extends Controller
         return $data;
     }
 
+    /**
+     * @return array
+     */
     function extractAdittionalInfo()
     {
 
@@ -153,6 +182,9 @@ class CVParserController extends Controller
         return $data;
     }
 
+    /**
+     * @return array
+     */
     private function extractLanguagesInfo()
     {
         $languages = $this->xml->StructuredXMLResume->Languages;
@@ -174,6 +206,9 @@ class CVParserController extends Controller
 
     }
 
+    /**
+     * @return array
+     */
     private function extractEducationInfo()
     {
         $education = $this->xml->StructuredXMLResume->EducationHistory;
@@ -188,7 +223,7 @@ class CVParserController extends Controller
                     'city'              => $this->getValue($education, 'LocationSummary', 'Municipality'),
                     'country_code'      => $this->getValue($education, 'LocationSummary', 'CountryCode'),
                     'degree_name'       => $this->getValue($education, 'Degree', 'DegreeName'),
-                    'degree_date'       => $this->getValue($education, 'Degree', 'DegreeDate', 'Year'),
+                    'degree_date'       => $this->getValue($education, 'Degree', 'DegreeDate', 'YearMonth'),
                     'start_date'        => $this->getValue($education, 'DatesOfAttendance', 'StartDate', 'Year'),
                     'end_date'          => $this->getValue($education, 'DatesOfAttendance', 'EndDate', 'Year'),
                     'comments'          => $this->getValue($education, 'Comments')
@@ -199,6 +234,9 @@ class CVParserController extends Controller
         return $data;
     }
 
+    /**
+     * @return array
+     */
     private function ExtractMobileNumber()
     {
         $mobile = $this->xml->StructuredXMLResume->ContactInfo->ContactMethod->Mobile;
@@ -214,6 +252,9 @@ class CVParserController extends Controller
     }
 
 
+    /**
+     * @return array
+     */
     private function ExtractTelephoneNumber()
     {
         $telephone = $this->xml->StructuredXMLResume->ContactInfo->ContactMethod->Telephone;
@@ -228,6 +269,9 @@ class CVParserController extends Controller
         return $data;
     }
 
+    /**
+     * @return string
+     */
     public function getValue()
     {
         $args_count = func_num_args();
