@@ -1,6 +1,6 @@
 <?php
 
-namespace Geeky\CVParser;
+namespace Geeky\CV;
 
 use App\Http\Controllers\Controller;
 
@@ -9,7 +9,7 @@ use App\Http\Controllers\Controller;
  *
  * @package Geeky\CVParser
  */
-class CVParserController extends Controller
+class Parser extends Controller
 {
 
     /**
