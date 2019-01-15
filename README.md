@@ -13,13 +13,13 @@ Then, in `config/app.php`, add the following to the service providers array.
 
     array(
        ...
-        Geeky\CVParser\CVParserServiceProvider::class,
+        Geeky\CV\ParserServiceProvider::class,
     )
     
 Finally, in `config/app.php`, add the following to the facades array.
 
     array(
-        'CV' => Geeky\CVParser\CVParserFacade::class,
+        'CV' => Geeky\CV\ParserFacade::class,
     )
 
 ## Usage
