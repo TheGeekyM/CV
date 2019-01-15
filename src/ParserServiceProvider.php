@@ -1,10 +1,8 @@
-<?php
-
-namespace Geeky\CVParser;
+<?php namespace Geeky\CV;
 
 use Illuminate\Support\ServiceProvider;
 
-class CVParserServiceProvider extends ServiceProvider
+class ParserServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.
@@ -14,7 +12,7 @@ class CVParserServiceProvider extends ServiceProvider
     public function boot()
     {
         // register CVParesr controller
-        $this->app->make(CVParserController::class);
+        $this->app->make(Parser::class);
     }
 
     /**
