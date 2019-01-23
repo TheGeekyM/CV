@@ -1,5 +1,7 @@
 <?php namespace Geeky\CV;
 
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+
 /**
  * Class Parser
  *
@@ -39,13 +41,15 @@ class Parser
             $resume_url = base64_encode(file_get_contents($resume_url));
         }
 
-        $client = new \SoapClient('http://88.198.90.116/cvvalid/CVXtractorService.wsdl');
+        $client = new \SoapClient(config('cvparser.service_url'));
+
         $result = $client->ProcessCV(
             [
                 'document_url' => $resume_url,
                 'account'      => 'theGeeky'
             ]
         );
+
         return $result->hrxml;
     }
 
@@ -54,9 +58,13 @@ class Parser
      */
     public function extractCVData()
     {
-        if ((string)$this->xml == 'document need to be specified!')
+        if ((string)$this->xml == 'document need to be specified!') {
             return 'false';
+        }
 
+        if ((string)$this->xml == 'Too Many Requests') {
+            throw new TooManyRequestsHttpException;
+        }
 
         $data['contact_info']           = $this->extractContactInfo();
         $data['experiences']            = $this->extractExperienceInfo();
